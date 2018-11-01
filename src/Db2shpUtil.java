@@ -24,7 +24,7 @@ public class Db2shpUtil extends JFrame {
 
     JComboBox comboBox;
 
-    JTextArea jta;
+    static JTextArea jta;
 
     File file = null;
 
@@ -127,7 +127,7 @@ public class Db2shpUtil extends JFrame {
         textfield2.setBounds(150,50,300,20);
         jPanel.add(textfield2);
 
-        jLabel1 = new JLabel("输出shp名称",JLabel.CENTER);
+        /*jLabel1 = new JLabel("输出shp名称",JLabel.CENTER);
         jLabel1.setBounds(20,80,120,20);
         jPanel.add(jLabel1);
 
@@ -138,10 +138,10 @@ public class Db2shpUtil extends JFrame {
 
         jLabel4 = new JLabel(".shp",JLabel.CENTER);
         jLabel4.setBounds(300,80,50,20);
-        jPanel.add(jLabel4);
+        jPanel.add(jLabel4);*/
 
         jLabel2 = new JLabel("文件类型",JLabel.CENTER);
-        jLabel2.setBounds(20,110,120,20);
+        jLabel2.setBounds(20,80,120,20);
         jPanel.add(jLabel2);
 
         comboBox =new JComboBox();
@@ -149,19 +149,19 @@ public class Db2shpUtil extends JFrame {
         comboBox.addItem("线（polyline）");
         comboBox.addItem("面（polygon）");
         comboBox.setSelectedIndex(2);
-        comboBox.setBounds(150,110,150,20);
+        comboBox.setBounds(150,80,150,20);
         jPanel.add(comboBox);
 
         jLabel3 = new JLabel("坐标串字段名称",JLabel.CENTER);
-        jLabel3.setBounds(20,140,120,20);
+        jLabel3.setBounds(20,110,120,20);
         jPanel.add(jLabel3);
 
         textField4 = new JTextField("POLYGON",20);
-        textField4.setBounds(150,140,150,20);
+        textField4.setBounds(150,110,150,20);
         jPanel.add(textField4);
 
         btnOK = new JButton("确定");
-        btnOK.setBounds(150,180,120,30);
+        btnOK.setBounds(150,150,120,30);
         jPanel.add(btnOK);
 
         final ImageIcon imageIcon = new ImageIcon("cky.jpg");
@@ -176,8 +176,10 @@ public class Db2shpUtil extends JFrame {
                 super.paint(g);
             }
         };
-        jta.append("控制台输出消息...........\n--------------------------------------------------------------------------------------------------------\n");
-        jta.setBounds(20,220,430,200);
+        jta.append("说明：\n" +
+                "       1、只支持一个db文件内多个或一个同种类型的数据，如：同为面数据，同为线数据或点数据，并且标识坐标串的名称相同且区分大小写；默认是面数据，标识坐标串字段名称为POLYGON；\n" +
+                "       2、输出shapefile文件名称与db数据库表文件名称相同，若输出目录已有数据，名称相同则会覆盖。\n-------------------------------------------------------------------------------------------------------\n");
+        jta.setBounds(20,200,430,200);
         jta.setEditable(false);
         jta.setLineWrap(true);
         JScrollPane scroll = new JScrollPane(jta);
@@ -185,15 +187,15 @@ public class Db2shpUtil extends JFrame {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setVerticalScrollBarPolicy(
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-
-        jPanel.add(jta);
+//        scroll.setViewport(jta);
+        scroll.setBounds(20,200,430,200);
+        jPanel.add(scroll);
 
         btnOK.addActionListener(new ActionListener() {
             /*这里重写event事件处理方法*/
             public void actionPerformed(ActionEvent e) {
                 String importFile = textfield.getText();
                 String outFolder = textfield2.getText();
-                String outName = textField3.getText().trim();
                 String filedName = textField4.getText().trim();
 
                 Toolkit.getDefaultToolkit().beep();
@@ -206,29 +208,34 @@ public class Db2shpUtil extends JFrame {
                     message = "请先选择需要转换的shapefile文件目录！";
                     JOptionPane.showMessageDialog(null, message, "提示",JOptionPane.WARNING_MESSAGE);
                     jta.append("【警告】："+message+"\n");
-                }else if(outName.trim().equals("")){
-                    message = "请先输入转换的shapefile文件名称！";
-                    JOptionPane.showMessageDialog(null, message, "提示",JOptionPane.WARNING_MESSAGE);
-                    jta.append("【警告】："+message+"\n");
                 }else if(filedName.trim().equals("")){
                     message = "请先输入db文件坐标串所在字段名称！";
                     JOptionPane.showMessageDialog(null, message, "提示",JOptionPane.WARNING_MESSAGE);
                     jta.append("【警告】："+message+"\n");
-                }else {
-                    String fileType = "POLYGON";
-                    int index = comboBox.getSelectedIndex();
-                    if (index ==0){
-                        fileType = "POINT";
-                    }else if(index == 1) {
-                        fileType = "POLYLINE";
-                    }else if(index == 2){
-                        fileType = "POLYGON";
+                } else{
+                    File importDB = new File(importFile);
+                    File exportFolder = new File(outFolder);
+                    if(!importDB.exists()){
+                        message = "当前选择的db文件不存在，请重新选择！";
+                        JOptionPane.showMessageDialog(null, message, "提示",JOptionPane.WARNING_MESSAGE);
+                        jta.append("【警告】："+message+"\n");
+                    }else if(!exportFolder.exists()){
+                        message = "当前选择的输出文件夹不存在，请重新选择！";
+                        JOptionPane.showMessageDialog(null, message, "提示",JOptionPane.WARNING_MESSAGE);
+                        jta.append("【警告】："+message+"\n");
+                    }else {
+                        String fileType = "POLYGON";
+                        int index = comboBox.getSelectedIndex();
+                        if (index ==0){
+                            fileType = "POINT";
+                        }else if(index == 1) {
+                            fileType = "POLYLINE";
+                        }else if(index == 2){
+                            fileType = "POLYGON";
+                        }
+                        jta.append("【提示】：当前操作执行参数为["+importFile+" , "+outFolder+"  , "+fileType+" , "+filedName+" ].\n");
+                        handleFile(importFile,outFolder,fileType,filedName);
                     }
-                    if(outName.contains(".")){
-                        outName = outName.substring(0,outName.lastIndexOf("."));
-                    }
-                    jta.append("【提示】：当前操作执行参数为["+importFile+" , "+outFolder+" , "+outName+" , "+fileType+" , "+filedName+" ].\n");
-                    handleFile(importFile,outFolder,outName,fileType,filedName);
                 }
             }
         });
@@ -240,7 +247,7 @@ public class Db2shpUtil extends JFrame {
         //弹出文件选择框
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("选择db文件");     //自定义选择框标题
-        chooser.setSelectedFile(new File("F:\\db2shp\\com.geo.wptb_20180302.db")); //设置默认文件名
+        chooser.setSelectedFile(new File("C:\\Users\\Administrator\\Desktop")); //设置默认文件名
 
         //后缀名过滤器
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
@@ -269,6 +276,7 @@ public class Db2shpUtil extends JFrame {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("选择转换文件目录");     //自定义选择框标题
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setSelectedFile(new File("C:\\Users\\Administrator\\Desktop"));
 
         int option = chooser.showSaveDialog(null);
         if(option==JFileChooser.APPROVE_OPTION){	//假如用户选择了保存
@@ -280,28 +288,28 @@ public class Db2shpUtil extends JFrame {
         }
     }
 
-    public void handleFile(String importFile ,String outFolder,String outName,String fileType,String filedName) {
+    public void handleFile(String importFile ,String outFolder,String fileType,String filedName) {
         System.out.println(file.getPath());
         if(file.getPath().equals(textfield.getText())){
             try {
                 DbHandler db = new DbHandler(importFile);
-                if(db.transformAll(outFolder,outName,fileType,filedName)){
+                if(db.transformAll(outFolder,fileType,filedName)){
                     java.awt.Desktop.getDesktop().open(new File(outFolder));
-                    jta.append("【提示】：文件转换完毕，请查看已打开的资源管理器。\n");
+                    jta.append("【提示】：文件转换完毕，请查看已打开的资源管理器。\n.......................................................\n");
                 }else {
                     Toolkit.getDefaultToolkit().beep();
                     JOptionPane.showMessageDialog(null, "转换出错，请联系管理员！", "提示",JOptionPane.WARNING_MESSAGE);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                jta.append("【失败】：参考信息如下...\n"+e.getMessage()+"\n");
+                jta.append("【失败】：参考信息如下......................................\n"+e.getMessage()+"\n");
             }
         }
     }
 
     //定义main方法
     public static void main(String[] args) {
-        new Db2shpUtil("db转shp工具",200,200,490,500);
+        new Db2shpUtil("db转shp工具",200,200,480,480);
     }
 
 }

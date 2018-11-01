@@ -1,3 +1,15 @@
 Manifest-Version: 1.0
+Class-Path: sqlite-jdbc-3.23.1.jar jts-1.11.jar gt-api-2.7.2.jar gt-cq
+ l-2.7.2.jar gt-svg-2.7.2.jar gt-wfs-2.7.2.jar gt-wms-2.7.2.jar gt-dat
+ a-2.7.2.jar gt-jp2k-2.7.2.jar gt-main-2.7.2.jar gt-image-2.7.2.jar gt
+ -swing-2.7.2.jar jt-utils-1.1.1.jar gt-charts-2.7.2.jar gt-render-2.7
+ .2.jar gt-geojson-2.7.2.jar gt-geotiff-2.7.2.jar gt-gtopo30-2.7.2.jar
+  gt-opengis-2.7.2.jar gt-process-2.7.2.jar gt-coverage-2.7.2.jar gt-e
+ psg-wkt-2.7.2.jar gt-metadata-2.7.2.jar gt-property-2.7.2.jar gt-temp
+ oral-2.7.2.jar gt-epsg-hsql-2.7.2.jar gt-shapefile-2.7.2.jar jsr-275-
+ 1.0-beta-2.jar gt-validation-2.7.2.jar gt-referencing-2.7.2.jar gt-sa
+ mple-data-2.7.2.jar gt-referencing3D-2.7.2.jar gt-epsg-extension-2.7.
+ 2.jar jt-vectorbinarize-1.1.1.jar gt-epsg-postgresql-2.7.2.jar gt-jdb
+ c-spatialite-2.7.2.jar gt-feature-pregeneralized-2.7.2.jar
 Main-Class: Db2shpUtil
 

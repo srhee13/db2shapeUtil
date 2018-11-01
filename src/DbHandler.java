@@ -8,6 +8,8 @@ import java.util.Map;
 public class DbHandler {
     private String dbFile = "";
 
+    private Db2shpUtil db2shpUtil;
+
     public DbHandler(String dbFile) {
         this.dbFile = dbFile;
     }
@@ -21,8 +23,11 @@ public class DbHandler {
             conn = DriverManager.getConnection(url);    //获取数据库连接
         }
         //捕获异常信息
-        catch (ClassNotFoundException | SQLException e) {
+        catch (ClassNotFoundException e) {
             System.out.println("数据库连接失败！"+e.getMessage());
+        }catch (SQLException e){
+            System.out.println("数据库连接失败！"+e.getMessage());
+            Db2shpUtil.jta.append(e.getMessage());
         }
         return conn;//返回一个连接
     }
@@ -30,28 +35,32 @@ public class DbHandler {
     public List getAllTableNames(){
         Connection con = this.connect();
         List tableNames = new ArrayList();
+        Db2shpUtil.jta.append("该DB文件内表文件有：\n");
         try {
             DatabaseMetaData dbmd = con.getMetaData();
             ResultSet rest = dbmd.getTables(null,null,null,new String[]{"TABLE"});
             while (rest.next()){
                 String tableName = rest.getString("TABLE_NAME");
-                System.out.println(tableName);
+                Db2shpUtil.jta.append(tableName+",");
                 tableNames.add(tableName);
             }
+            Db2shpUtil.jta.append("\n");
             con.close();
         }catch (SQLException e){
             e.printStackTrace();
+            Db2shpUtil.jta.append(e.getMessage());
             try {
                 con.close();
             }catch (SQLException e2){
                 e2.printStackTrace();
+                Db2shpUtil.jta.append(e.getMessage());
             }
         }
         return tableNames;
     }
 
     public List<Map<String,Object>> getAllColumns( String tableName){
-        List<Map<String,Object>> columnsInfo = new ArrayList<>();
+        List<Map<String,Object>> columnsInfo = new ArrayList<Map<String, Object>>();
         Connection conn =  this.connect();
         ResultSet rs = null;
         try{
@@ -65,13 +74,14 @@ public class DbHandler {
              * columnNamePattern - 列名称; ""表示获取列名为""的列(当然获取不到);null表示获取所有的列;可包含单字符通配符("_"),或多字符通配符("%");
              */
             rs =dbmd.getColumns(null, null, tableName, null);
-
+            Db2shpUtil.jta.append("该【"+tableName+"】表所有列名如下：\n");
             while(rs.next()){
-                Map<String,Object> map = new HashMap<>();
+                Map<String,Object> map = new HashMap<String, Object>();
                 String tableCat = rs.getString("TABLE_CAT");  //表类别（可能为空）
                 String tableSchemaName = rs.getString("TABLE_SCHEM");  //表模式（可能为空）,在oracle中获取的是命名空间,其它数据库未知
                 String tableName_ = rs.getString("TABLE_NAME");  //表名
                 String columnName = rs.getString("COLUMN_NAME");  //列名
+                Db2shpUtil.jta.append(columnName+" ,");
                 int dataType = rs.getInt("DATA_TYPE");     //对应的java.sql.Types的SQL类型(列类型ID)
                 String dataTypeName = rs.getString("TYPE_NAME");  //java.sql.Types类型名称(列类型名称)
                 int columnSize = rs.getInt("COLUMN_SIZE");  //列大小
@@ -121,20 +131,21 @@ public class DbHandler {
             conn.close();
         }catch(SQLException ex){
             ex.printStackTrace();
+            Db2shpUtil.jta.append(ex.getMessage());
             try {
                 conn.close();
             }catch (SQLException e2){
                 e2.printStackTrace();
+                Db2shpUtil.jta.append(e2.getMessage());
             }
         }
         return columnsInfo;
     }
 
     public List<Map<String,Object>> getAllValues(String tableName){
-        List<Map<String,Object>> valuesInfo = new ArrayList<>();
+        List<Map<String,Object>> valuesInfo = new ArrayList<Map<String, Object>>();
         Connection conn = null;
         try {
-            int count = 0;
             conn = this.connect();
             List<Map<String,Object>> columnsInfo = getAllColumns(tableName);
 
@@ -150,28 +161,28 @@ public class DbHandler {
                     String columnName = (String)m.get("COLUMN_NAME");
                     map.put(columnName,rs.getObject(columnName));
                 }
-                count ++;
                 valuesInfo.add(map);
             }
-            System.out.println(count);
             conn.close();
         }
         catch (SQLException e) {
             System.out.println("查询数据时出错！"+e.getMessage());
+            Db2shpUtil.jta.append(e.getMessage());
             try {
                 conn.close();
             }catch (SQLException e1){
                 e1.printStackTrace();
+                Db2shpUtil.jta.append(e.getMessage());
             }
         }
         return valuesInfo;
     }
 
-    public boolean transformAll(String filepath,String fileName,String shpType,String shpField) {
+    public boolean transformAll(String filepath,String shpType,String shpField) {
         boolean flag = false;
         try {
             List<String> tableNames = getAllTableNames();
-            for (String tableName :tableNames){
+            for (String tableName : tableNames){
                 List<Map<String,Object>> columnsInfo = getAllColumns(tableName);
                 List<Map<String,Object>> valuesInfo = getAllValues(tableName);
                 ShapeHandler shapeHandler = new ShapeHandler();
@@ -179,20 +190,14 @@ public class DbHandler {
                 String fileName = "ppp";
                 String shpType = "POLYGON";
                 String shpField ="POLYGON";*/
-                shapeHandler.write(filepath,fileName,shpType,shpField,columnsInfo,valuesInfo);
+                shapeHandler.write(filepath,tableName,shpType,shpField,columnsInfo,valuesInfo);
             }
             flag = true;
         }
         catch (Exception e) {
             e.printStackTrace();
+            Db2shpUtil.jta.append(e.getMessage());
         }
         return flag;
-    }
-
-    public static void main(String[] args) {
-//        DbHandler db = new DbHandler();
-//        Connection connect = db.connect();
-//        db.getAllTableNames();
-//        db.transformAll();
     }
 }
